@@ -1,3 +1,5 @@
+virtualenv
+opencv-python==4.4.0.44
 hdijupyterutils==0.16.0
 jupyter==1.0.0
 jupyter-client==5.3.4

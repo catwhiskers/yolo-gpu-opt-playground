@@ -7,23 +7,30 @@ import os
 from os import listdir
 from os.path import isfile, join
 import time
+import sys
+
+batch_size = 32
+if len(sys.argv) > 1: 
+    batch_size = int(sys.argv[1]) 
+
+print("batch_size:{}".format(batch_size))   
 
 # prepare config files
-labelsPath = os.path.sep.join([".","coco.names"])
-weightsPath = os.path.sep.join([".", "yolov3.weights"])
-configPath = os.path.sep.join([".", "yolov3.cfg"])
+labelsPath = os.path.sep.join([".","yolo-coco/coco.names"])
+weightsPath = os.path.sep.join([".", "yolo-coco/yolov3.weights"])
+configPath = os.path.sep.join([".", "yolo-coco/yolov3.cfg"])
 
 # build yolo network
 print("[INFO] loading YOLO from disk...")
 net = cv2.dnn.readNetFromDarknet(configPath, weightsPath)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
-image_dir = "images"
+image_dir = "/home/ubuntu/images"
 image_files = [f for f in listdir(image_dir) if isfile(join(image_dir, f))]
 timeStr = time.time()
 
 
-with open("coco.names", "r") as f:
+with open("yolo-coco/coco.names", "r") as f:
     classes = [line.strip() for line in f.readlines()]
     layer_names = net.getLayerNames()
     output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
@@ -45,7 +52,7 @@ def get_next_image_batch(image_files, start, batch_size):
     return imgs, img_meta, next_start
 
 start = 0
-batch_size = 8
+
 
 while True:
     imgs, img_meta, next_start = get_next_image_batch(image_files, start, batch_size)
@@ -76,10 +83,12 @@ while True:
                     confidences.append(float(confidence))
                     class_ids.append(class_id)
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
-    print(len(indexes))
+
+    print("start:{}".format(start))
     if next_start == -1: 
         break
-
+    else:
+        start = next_start
 
 
 
